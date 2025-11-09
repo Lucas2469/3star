@@ -6,13 +6,14 @@ public class MainMenu : MonoBehaviour
     public void Jugar()
     {
         // Cambia "Nivel1" por el nombre exacto de tu escena del juego
-        SceneManager.LoadScene("Game");
+        SceneManager.LoadScene("Mapa");
     }
 
-    public void Opciones()
+  public void Opciones()
     {
-        // Muestra el menú de ajustes (puedes activar un panel)
-        Debug.Log("Abrir menú de opciones");
+        // Muestra el menï¿½ de ajustes (puedes activar un panel)
+      
+        SceneManager.LoadScene("SettingsMenu");
     }
 
     public void Salir()
@@ -21,3 +22,4 @@ public class MainMenu : MonoBehaviour
         Application.Quit();
     }
 }
+

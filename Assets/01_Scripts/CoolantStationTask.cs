@@ -2,36 +2,50 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
+using System.Collections;
+using UnityEngine.SceneManagement;
 
-public class CoolantStationTask : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
+public class CoolantStationTaskWithReturn : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
     [Header("UI refs")]
-    public Image tubeFill;        // coolant_fill_196x696 (Filled Vertical)
-    public RectTransform coolantCan; // icono bidón
+    public Image tubeFill;
+    public RectTransform coolantCan;
     public Button holdButton;
     public TMP_Text statusText;
-    public Image readyLight;      // opcional
+    public Image readyLight;
 
     [Header("Tuning")]
-    public float fillSeconds = 3.5f;   // tiempo sosteniendo para llenar
-    public float emptySeconds = 3.5f;  // tiempo que tarda en vaciar el bidón (escala Y)
-    public float idleLeakPerSecond = 0.0f; // si quieres que baje cuando sueltas
+    public float fillSeconds = 3.5f;
+    public float emptySeconds = 3.5f;
+    public float idleLeakPerSecond = 0.0f;
 
-    float fill; // 0..1
-    float canLevel = 1f; // escala Y del bidón 1..0
+    [Header("Mapa")]
+    public string escenaMapa = "Mapa";
+    public float tiempoMensaje = 2f;
+
+    float fill;
+    float canLevel = 1f;
     bool isHolding;
+    bool completed;
 
     void Start()
     {
-        SetStatus("Mantén presionado para bombear");
+        // Mostrar cursor
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
+        SetStatus("MantÃ©n presionado para bombear");
         if (readyLight) readyLight.enabled = false;
         UpdateUI();
-        // Asegura que el botón propaga eventos al script:
+
+        // Asegura que el botÃ³n propague eventos al script:
         var trigger = holdButton.gameObject.GetComponent<EventTrigger>();
         if (!trigger)
             trigger = holdButton.gameObject.AddComponent<EventTrigger>();
         AddEvent(trigger, EventTriggerType.PointerDown, (e) => OnPointerDown(null));
         AddEvent(trigger, EventTriggerType.PointerUp, (e) => OnPointerUp(null));
+
+        if (holdButton) holdButton.interactable = true;
     }
 
     void AddEvent(EventTrigger trg, EventTriggerType type, System.Action<BaseEventData> cb)
@@ -46,19 +60,16 @@ public class CoolantStationTask : MonoBehaviour, IPointerDownHandler, IPointerUp
 
     void Update()
     {
-        if (IsCompleted) return;
+        if (completed) return;
 
         if (isHolding && canLevel > 0f)
         {
-            // Llenar tubo
             fill += Time.deltaTime / Mathf.Max(0.01f, fillSeconds);
-            // Vaciar bidón
             canLevel -= Time.deltaTime / Mathf.Max(0.01f, emptySeconds);
         }
-        else
+        else if (idleLeakPerSecond > 0f)
         {
-            // fuga opcional del tubo cuando no sostienes
-            if (idleLeakPerSecond > 0f) fill -= idleLeakPerSecond * Time.deltaTime;
+            fill -= idleLeakPerSecond * Time.deltaTime;
         }
 
         fill = Mathf.Clamp01(fill);
@@ -66,13 +77,11 @@ public class CoolantStationTask : MonoBehaviour, IPointerDownHandler, IPointerUp
 
         UpdateUI();
 
-        if (!IsCompleted && fill >= 1f)
+        if (!completed && fill >= 1f)
         {
             CompleteTask();
         }
     }
-
-    bool IsCompleted => fill >= 1f;
 
     void UpdateUI()
     {
@@ -87,9 +96,31 @@ public class CoolantStationTask : MonoBehaviour, IPointerDownHandler, IPointerUp
 
     void CompleteTask()
     {
-        SetStatus("¡Tarea completada!");
+        completed = true;
+        SetStatus("Â¡Tarea completada!");
         if (readyLight) readyLight.enabled = true;
         if (holdButton) holdButton.interactable = false;
-        // TODO: aquí puedes notificar a tu GameManager
+
+        StartCoroutine(VolverAMapaConDelay());
+    }
+
+    IEnumerator VolverAMapaConDelay()
+    {
+        yield return new WaitForSeconds(tiempoMensaje);
+
+        // Restaurar posiciÃ³n del jugador desde PlayerPrefs
+        float x = PlayerPrefs.GetFloat("PlayerPosX", 0f);
+        float y = PlayerPrefs.GetFloat("PlayerPosY", 0f);
+        float z = PlayerPrefs.GetFloat("PlayerPosZ", 0f);
+
+        PlayerPrefs.DeleteKey("PlayerPosX");
+        PlayerPrefs.DeleteKey("PlayerPosY");
+        PlayerPrefs.DeleteKey("PlayerPosZ");
+
+        // Cambiar a escena Mapa
+        SceneManager.LoadScene(escenaMapa);
+
+        // Nota: para colocar al jugador en la posiciÃ³n exacta,
+        // usar script en jugador que lea PlayerPrefs al Start() en la escena Mapa
     }
 }

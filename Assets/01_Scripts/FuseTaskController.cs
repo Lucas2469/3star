@@ -1,26 +1,34 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
+using UnityEngine.SceneManagement;
+using TMPro;
 
-public class FuseTaskController : MonoBehaviour
+public class FuseTaskControllerWithReturn : MonoBehaviour
 {
     [Header("Referencias UI")]
-    public GameObject rightOff;       // GameObject (Image) del circuito apagado
-    public GameObject rightOn;        // GameObject (Image) del circuito encendido
-    public Image fuseImage;           // Image del botón del fusible
-    public Sprite fuseOffSprite;      // sprite apagado
-    public Sprite fuseOnSprite;       // sprite encendido
+    public GameObject rightOff;
+    public GameObject rightOn;
+    public Image fuseImage;
+    public Sprite fuseOffSprite;
+    public Sprite fuseOnSprite;
+    public TMP_Text statusText;  // texto para mensaje completado
 
-    [Header("Animación (opcional)")]
+    [Header("AnimaciÃ³n (opcional)")]
     public float crossfadeTime = 0.35f;
+
+    [Header("Mapa")]
+    public string escenaMapa = "Mapa";
+    public float tiempoMensaje = 2f;
 
     bool isPowered = false;
     float tAnim = 0f;
+    bool completed = false;
 
     CanvasGroup offCg, onCg;
 
     void Awake()
     {
-        // CanvasGroup para crossfade sin materiales
         offCg = rightOff.GetComponent<CanvasGroup>();
         if (!offCg) offCg = rightOff.AddComponent<CanvasGroup>();
         onCg = rightOn.GetComponent<CanvasGroup>();
@@ -29,12 +37,28 @@ public class FuseTaskController : MonoBehaviour
 
     void Start()
     {
+        // Mostrar cursor
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
         SetState(false, instant: true);
     }
 
     public void ToggleFuse()
     {
+        if (completed) return;
+
         SetState(!isPowered, instant: false);
+
+        if (isPowered && !completed)
+        {
+            completed = true;
+            if (statusText) 
+            {
+                statusText.text = "Â¡Tarea completada!";
+            }
+            StartCoroutine(VolverAMapaConDelay());
+        }
     }
 
     void SetState(bool powered, bool instant)
@@ -43,7 +67,7 @@ public class FuseTaskController : MonoBehaviour
 
         fuseImage.sprite = powered ? fuseOnSprite : fuseOffSprite;
 
-        rightOn.SetActive(true);  // lo activamos para poder animar alpha
+        rightOn.SetActive(true);
         rightOff.SetActive(true);
 
         if (instant || crossfadeTime <= 0f)
@@ -55,12 +79,11 @@ public class FuseTaskController : MonoBehaviour
             return;
         }
 
-        // arrancar animación
         StopAllCoroutines();
         StartCoroutine(Crossfade(powered));
     }
 
-    System.Collections.IEnumerator Crossfade(bool toPowered)
+    IEnumerator Crossfade(bool toPowered)
     {
         tAnim = 0f;
         float startOn = onCg.alpha;
@@ -82,5 +105,25 @@ public class FuseTaskController : MonoBehaviour
 
         rightOn.SetActive(toPowered);
         rightOff.SetActive(!toPowered);
+    }
+
+    IEnumerator VolverAMapaConDelay()
+    {
+        yield return new WaitForSeconds(tiempoMensaje);
+
+        // Restaurar posiciÃ³n del jugador desde PlayerPrefs
+        float x = PlayerPrefs.GetFloat("PlayerPosX", 0f);
+        float y = PlayerPrefs.GetFloat("PlayerPosY", 0f);
+        float z = PlayerPrefs.GetFloat("PlayerPosZ", 0f);
+
+        PlayerPrefs.DeleteKey("PlayerPosX");
+        PlayerPrefs.DeleteKey("PlayerPosY");
+        PlayerPrefs.DeleteKey("PlayerPosZ");
+
+        // Cambiar a escena Mapa
+        SceneManager.LoadScene(escenaMapa);
+
+        // Nota: para colocar al jugador en la posiciÃ³n exacta,
+        // usar script en jugador que lea PlayerPrefs al Start() en la escena Mapa
     }
 }

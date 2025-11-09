@@ -14,10 +14,9 @@ public class SettingsMenu : MonoBehaviour
     public void GoBack()
     {
         // Leemos la escena anterior
-        string previousScene = PlayerPrefs.GetString("PreviousScene", "MainMenu");
+        string previousScene = PlayerPrefs.GetString("PauseMenu", "MainMenu");
 
-        // Si no existe, volverá al MainMenu por defecto
         SceneManager.LoadScene(previousScene);
-        PlayerPrefs.DeleteKey("PreviousScene");
+        PlayerPrefs.DeleteKey("PauseMenu");
     }
 }

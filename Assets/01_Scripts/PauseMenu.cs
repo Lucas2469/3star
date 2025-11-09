@@ -5,13 +5,13 @@ public class PauseMenu : MonoBehaviour
 {
     public void Continue()
     {
-        // Cambiar lógica de pausa, retornando al juego sin recargar toda la escena, recuperando el progreso
-        SceneManager.LoadScene("Game");
+        // Cambiar lï¿½gica de pausa, retornando al juego sin recargar toda la escena, recuperando el progreso
+        SceneManager.LoadScene("Mapa");
     }
 
     public void Settings()
     {
-        // Muestra el menú de ajustes (puedes activar un panel)
+        // Muestra el menï¿½ de ajustes (puedes activar un panel)
         Debug.Log("Settings Scene loading...");
         SceneManager.LoadScene("SettingsMenu");
     }

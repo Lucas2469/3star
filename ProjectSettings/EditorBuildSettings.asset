@@ -8,9 +8,45 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/MainMenu.unity
     guid: 6020c87bbc66bfb4eba0feb4c02b495a
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Game.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/Mapa.unity
+    guid: a684ecacf175c804aafef11e1ed2e36a
+  - enabled: 1
+    path: Assets/Scenes/cables.unity
+    guid: c02ce826d95c1454c856adde2d3e8b19
+  - enabled: 1
+    path: Assets/Scenes/OrderNumber.unity
+    guid: d347c93905202aa478fd1ce149f076be
+  - enabled: 1
+    path: Assets/Scenes/TemperatureControl.unity
+    guid: 7002ed1170e70ff468c78a46857109d0
+  - enabled: 1
+    path: Assets/Scenes/PhoneCubes.unity
+    guid: 8916ef6bd55af4a44a745153deb99b5a
+  - enabled: 1
+    path: Assets/Scenes/RefrigerationTaskCube.unity
+    guid: 39cdf69aab5d0b94da2c4e58d3cc1b63
+  - enabled: 1
+    path: Assets/Scenes/shieldwork.unity
+    guid: 357bb8bb881f53140aa4145f658213a5
+  - enabled: 1
+    path: Assets/Scenes/ResertMainData.unity
+    guid: bb9e464f16ec4ed4a9d5dbac9fd7c84b
+  - enabled: 1
+    path: Assets/Scenes/FuseTask.unity
+    guid: 5278978610f71f2419ad990e7266881c
+  - enabled: 1
+    path: Assets/Scenes/INICIO.unity
+    guid: 511e6eb55627f674d9ca82ba83ab94f3
+  - enabled: 1
+    path: Assets/Scenes/SettingsMenu.unity
+    guid: 5fa690c32de39db4c816fd64517aa4f2
+  - enabled: 1
+    path: Assets/Scenes/PauseMenu.unity
+    guid: 37284d6167941d841950cf043f5b73c8
   m_configObjects:
-    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 5496f2b392b12bb479b911af85720b31, type: 3}
   m_UseUCBPForAssetBundles: 0

@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
-public class NumberOrderTask : MonoBehaviour
+public class NumberOrderTaskWithReturn : MonoBehaviour
 {
     [Header("UI")]
-    public RectTransform grid;    // contenedor con GridLayoutGroup
-    public NumberTile tilePrefab; // ¡prefab con NumberTile en la raíz!
-    public TMP_Text statusText;   // opcional
+    public RectTransform grid;    
+    public NumberTile tilePrefab; 
+    public TMP_Text statusText;   
 
     [Header("Sprites")]
     public Sprite tileNormal;
@@ -18,9 +19,9 @@ public class NumberOrderTask : MonoBehaviour
 
     [Header("Config")]
     public float errorFlashSeconds = 2f;
+    public string escenaMapa = "Mapa";       // Escena a la que volver
+    public float tiempoMensaje = 2f;         // Tiempo antes de volver a mapa
 
-    // Orden fijo estilo Among Us (ajústalo a gusto)
-    // Ejemplo como tu referencia: 5 6 4 7 9  |  2 8 1 3 10
     public int[] fixedOrder = new int[] { 5, 6, 4, 7, 9, 2, 8, 1, 3, 10 };
 
     List<NumberTile> tiles = new List<NumberTile>();
@@ -29,6 +30,10 @@ public class NumberOrderTask : MonoBehaviour
 
     void Start()
     {
+        // Mostrar cursor
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
         BuildTiles();
         ApplyFixedOrder();
         ResetState();
@@ -36,11 +41,9 @@ public class NumberOrderTask : MonoBehaviour
 
     void BuildTiles()
     {
-        // Limpia hijos previos del grid
         foreach (Transform c in grid) Destroy(c.gameObject);
         tiles.Clear();
 
-        // Crea 1..10
         for (int n = 1; n <= 10; n++)
         {
             var t = Instantiate(tilePrefab, grid);
@@ -51,21 +54,15 @@ public class NumberOrderTask : MonoBehaviour
 
     void ApplyFixedOrder()
     {
-        // Ordena visualmente los hijos del grid según fixedOrder
-        // (No cambia el value de cada tile; solo su posición)
-        // Primero: mapa número -> tile
         var map = new Dictionary<int, NumberTile>(tiles.Count);
         foreach (var t in tiles) map[t.value] = t;
 
-        // Poner en el orden deseado (set sibling indices en secuencia)
         int sibling = 0;
         for (int i = 0; i < fixedOrder.Length; i++)
         {
             int num = fixedOrder[i];
             if (map.TryGetValue(num, out var tile))
-            {
                 tile.transform.SetSiblingIndex(sibling++);
-            }
         }
     }
 
@@ -92,11 +89,10 @@ public class NumberOrderTask : MonoBehaviour
             tile.SetInteractable(false);
             nextExpected++;
 
-            // ¿Completado?
             if (nextExpected > 10)
             {
-                if (statusText) statusText.text = "¡Completado! ✅";
-                StartCoroutine(DisableAllAfter(0.4f));
+                if (statusText) statusText.text = "¡Tarea completada! ✅";
+                StartCoroutine(VolverAMapaConDelay());
             }
         }
         else
@@ -109,7 +105,6 @@ public class NumberOrderTask : MonoBehaviour
     {
         locked = true;
 
-        // Todos a rojo y deshabilitados
         foreach (var t in tiles)
         {
             t.SetError();
@@ -119,17 +114,28 @@ public class NumberOrderTask : MonoBehaviour
         if (statusText) statusText.text = "¡Orden incorrecto! Reiniciando...";
         yield return new WaitForSeconds(errorFlashSeconds);
 
-        // Volver al orden fijo y resetear
         ApplyFixedOrder();
         ResetState();
     }
 
-    IEnumerator DisableAllAfter(float delay)
+    IEnumerator VolverAMapaConDelay()
     {
-        yield return new WaitForSeconds(delay);
-        foreach (var t in tiles) t.SetInteractable(false);
-        // Aquí puedes cerrar la tarea o notificar éxito
-        // gameObject.SetActive(false);
+        locked = true;
+        yield return new WaitForSeconds(tiempoMensaje);
+
+        // Restaurar posición del jugador antes de entrar al minijuego
+        float x = PlayerPrefs.GetFloat("PlayerPosX", 0f);
+        float y = PlayerPrefs.GetFloat("PlayerPosY", 0f);
+        float z = PlayerPrefs.GetFloat("PlayerPosZ", 0f);
+
+        PlayerPrefs.DeleteKey("PlayerPosX");
+        PlayerPrefs.DeleteKey("PlayerPosY");
+        PlayerPrefs.DeleteKey("PlayerPosZ");
+
+        // Cambiar a escena Mapa
+        SceneManager.LoadScene(escenaMapa);
+
+        // Nota: para restaurar posición, usar script en jugador en Mapa
+        // que lea PlayerPrefs al Start() como hicimos antes
     }
 }
-

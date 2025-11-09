@@ -2,28 +2,40 @@
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
+using UnityEngine.SceneManagement;
+using TMPro;
 
-public class ShieldTaskManager : MonoBehaviour
+
+public class ShieldTaskManagerWithReturn : MonoBehaviour
 {
     [Header("Referencia")]
-    public RectTransform board;          // PanelEscudos
+    public RectTransform board;
     public HexTile tilePrefab;
 
     [Header("Layout")]
     public float tileSize = 120f;
     public float spacing = 6f;
-    public int rings = 2;                // 0 = solo centro; 1 = centro + 1 anillo; 2 = centro + 2 anillos…
+    public int rings = 2;
 
     [Header("Inicio aleatorio")]
-    [Range(0f, 1f)] public float startActiveProbability = 0.55f; // % de hex que inician rojos
+    [Range(0f, 1f)] public float startActiveProbability = 0.55f;
 
     [Header("UI de estado")]
-    public Text statusText; // opcional
+    public TextMeshProUGUI statusText;
+
+    [Header("Mapa")]
+    public string escenaMapa = "Mapa";
+    public float tiempoMensaje = 2f;
 
     List<HexTile> tiles = new();
 
     void Start()
     {
+        // Mostrar cursor
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
         GenerateHexBoard();
         RandomizeStates();
         UpdateStatus();
@@ -31,29 +43,24 @@ public class ShieldTaskManager : MonoBehaviour
 
     void GenerateHexBoard()
     {
-        // Disposición hexagonal (offset coordinates “pointy top”)
         float w = tileSize;
-        float h = Mathf.Sqrt(3f) / 2f * w; // altura efectiva de un hex pointy
-        float xStep = w * 0.75f;           // solape horizontal
-        float yStep = h;                   // vertical
+        float h = Mathf.Sqrt(3f) / 2f * w;
+        float xStep = w * 0.75f;
+        float yStep = h;
 
-        // Centro (q=0,r=0)
         CreateTile(Vector2.zero);
 
-        // Anillos alrededor del centro
         for (int r = 1; r <= rings; r++)
         {
-            // Empezamos en la “esquina” de la derecha
-            int q = r, s = -r, t = 0;
-            // 6 lados del anillo
+            int q = r, s = -r;
             Vector2Int[] dirs = new[]
             {
-                new Vector2Int(0,1),   // subir
-                new Vector2Int(-1,1),  // arriba-izq
-                new Vector2Int(-1,0),  // izq
-                new Vector2Int(0,-1),  // abajo
-                new Vector2Int(1,-1),  // abajo-der
-                new Vector2Int(1,0)    // der
+                new Vector2Int(0,1), 
+                new Vector2Int(-1,1),
+                new Vector2Int(-1,0),
+                new Vector2Int(0,-1),
+                new Vector2Int(1,-1),
+                new Vector2Int(1,0)
             };
 
             for (int side = 0; side < 6; side++)
@@ -70,7 +77,6 @@ public class ShieldTaskManager : MonoBehaviour
 
         Vector2 AxialToXY(int q, int r2, float W, float H, float Xs, float Ys)
         {
-            // Pointy-top axial to pixel
             float x = (q * Xs);
             float y = (r2 * Ys) + (q * Ys * 0.5f);
             return new Vector2(x, y);
@@ -95,7 +101,6 @@ public class ShieldTaskManager : MonoBehaviour
             t.SetState(active);
         }
 
-        // Evitar el caso trivial: todos apagados al inicio
         if (tiles.All(x => !x.IsActive))
         {
             tiles[Random.Range(0, tiles.Count)].SetState(true);
@@ -106,14 +111,12 @@ public class ShieldTaskManager : MonoBehaviour
     {
         if (tiles.All(x => !x.IsActive))
         {
-            // ¡Completado!
             foreach (var tile in tiles)
-                tile.Hide();              // <- los vuelves invisibles
+                tile.Hide();
 
-            if (statusText) statusText.text = "Completado ✅";
+            if (statusText) statusText.text = "¡Tarea completada! ✅";
 
-            // Si quieres, también puedes desactivar todo el tablero:
-            // board.gameObject.SetActive(false);
+            StartCoroutine(VolverAMapaConDelay());
         }
         else
         {
@@ -121,11 +124,30 @@ public class ShieldTaskManager : MonoBehaviour
         }
     }
 
-
     void UpdateStatus()
     {
         if (!statusText) return;
         int restantes = tiles.Count(x => x.IsActive);
-        statusText.text = $"Encedidos: {restantes}";
+        statusText.text = $"Encendidos: {restantes}";
+    }
+
+    IEnumerator VolverAMapaConDelay()
+    {
+        yield return new WaitForSeconds(tiempoMensaje);
+
+        // Restaurar posición del jugador desde PlayerPrefs
+        float x = PlayerPrefs.GetFloat("PlayerPosX", 0f);
+        float y = PlayerPrefs.GetFloat("PlayerPosY", 0f);
+        float z = PlayerPrefs.GetFloat("PlayerPosZ", 0f);
+
+        PlayerPrefs.DeleteKey("PlayerPosX");
+        PlayerPrefs.DeleteKey("PlayerPosY");
+        PlayerPrefs.DeleteKey("PlayerPosZ");
+
+        // Cambiar a escena Mapa
+        SceneManager.LoadScene(escenaMapa);
+
+        // Nota: para colocar al jugador en la posición exacta,
+        // usar script en jugador que lea PlayerPrefs al Start() en la escena Mapa
     }
 }
